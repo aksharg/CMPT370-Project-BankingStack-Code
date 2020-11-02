@@ -1,9 +1,5 @@
-# Group 9
+# Group 9 - Milestone 3 Sample Test Cases
 
-Tuesday Tutorial
+In order to run the test files. Simply Downlead them and use the following command to run via terminal
 
-Akshar Gajjar  
-Devin Ramaswami  
-Benjamin Fehr  
-Travis Baldwin  
-Yee Jing Shin  
+pytest <filename.py>
