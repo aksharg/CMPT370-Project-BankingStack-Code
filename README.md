@@ -1,4 +1,4 @@
-# Group 9
+# Group 9 - Milestone 3 Sample Test Cases
 
 Tuesday Tutorial
 
