@@ -1,3 +1,4 @@
+import json
 from plaid import Client
 
 def checkInstitutionSupport(institute_query):
