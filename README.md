@@ -3,7 +3,6 @@
 In order to run the test files for this milestone you will need to install certain libraries. 
 
 Required libraries
-- json
 - cryptography
 - pytest
 - plaid-python
