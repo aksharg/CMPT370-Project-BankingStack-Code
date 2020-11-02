@@ -1,6 +1,5 @@
 import pytest
-import json
-from plaid import Client
+from institutions import checkInstitutionSupport
 
 
 def checkInstitutionSupport(institute_query):
