@@ -1,50 +1,7 @@
-#import pytest
+import pytest
 import json
-
-def register(username, password, email, user_ID):
-	"""Register the user
-
-	Stores args in a dictionary which is converted into a json string 
-	for storage.
-
-    Args:
-		username: A string containing the user's username
-        password: A string containing the user's password
-		email: A string containing the user's email
-		user_ID: An integer containing the user's given ID
-    Returns:
-		A json string that contains the user's registration information
-		which will be saved to a json file.
-
-    """
-	register = {"username": username,
-			"password": password,
-			"email": email,
-			"user_ID": user_ID}
-	
-	json_string = json.dumps(register)
-	return json_string
-
-
-def fileCreation(file_name, source, data):
-	"""Create a file
-
-	Creates a file and writes the value of data into the file.
-
-    Args:
-		file_name: A string describing name of file and path if applicable
-		source: Source may be used to specify what formatting or 
-		what kind of file to create in the future but right now it does nothing
-		data: A string that may be encrypted or unencrypted
-    Returns:
-		The created file's name.
-
-    """
-	file = open(file_name, "w")
-	file.write(data)
-	file.close()
-
-	return file.name
+from register import register
+from createFile import fileCreation
 
 
 def test_registerString():
