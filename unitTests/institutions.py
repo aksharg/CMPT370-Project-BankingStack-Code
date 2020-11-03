@@ -40,7 +40,7 @@ def checkInstitutionSupport(institute_query):
         institution_status = client.Institutions.get_by_id(institution_info['institutions'][0]['institution_id'],country_codes=["CA"],_options={'include_status':True})
         institution_status['institution'].pop('routing_numbers')
 
-        if institution_status['institution']['status']['auth']['status'] != 'HEALTHY':
+        if institution_status['institution']['status']['item_logins']['status'] != 'HEALTHY':
             raise Exception("Authentication features unavailable. Bank connection not available")
         elif institution_status['institution']['status']['transactions_updates']['status'] != 'HEALTHY':
             raise Exception("Transactions features unavailable. Bank connection not available")
