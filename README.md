@@ -13,4 +13,4 @@ pip install -r requirements.txt
 
 In order to run the test files. Simply Downlead them and use the following command to run via terminal
 
-pytest <filename.py>
+py.test > unit_test.log --verbose
