@@ -1,0 +1,9 @@
+{
+    "users": [
+        {
+            "user_id": "1",
+            "credentials_file": "plaidFunctions/users/1/userCredentials.json",
+            "accounts_file": "plaidFunctions/users/1/userAccounts.json"
+        }
+    ]
+}

@@ -4,7 +4,6 @@ import sys
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-
 class serverDataStore:
     def __init__(self, server_params):
         self.server_params = server_params
@@ -54,17 +53,16 @@ class plaidHTTPServer(BaseHTTPRequestHandler):
         path = self.path.split('?')[0]
 
         if path == '/link.html':
-            self.fileServe('group9\plaidFunctions\html\link.html')
+            self.fileServe('plaidFunctions\html\link.html')
             return
 
         else:
             self.send404Error()
 
-
 def openWebpage(url):
     webbrowser.open(url)
 
-def startServer(env: str, clientName: str, token: str, pageTitle: str, accountName: str, type: str):
+def startServer(env: str, client_name: str, token: str, page_title: str, account_name: str, type: str):
     """[summary]
 
     Args:
@@ -81,10 +79,10 @@ def startServer(env: str, clientName: str, token: str, pageTitle: str, accountNa
 
     server_params = dict(
         env=env,
-        clientName=clientName,
+        clientName=client_name,
         token=token,
-        pageTitle=pageTitle,
-        accountName=accountName,
+        pageTitle=page_title,
+        accountName=account_name,
         type=type
     )
 
@@ -106,7 +104,6 @@ def startServer(env: str, clientName: str, token: str, pageTitle: str, accountNa
 
     return params.plaid_response
 
-
 if __name__ == '__main__':
-    # startServer({})
-    startServer('a','b','c','d','e','f')
+    startServer({})
+    # startServer('a','b','c','d','e','f')

@@ -1,0 +1,12 @@
+{
+    "accounts": [
+        {
+            "account_id" : "",
+            "account_name" : "",
+            "account_owner" : "",
+            "account_type" : "",
+            "balances" : "",
+            "access_token" : ""
+        }
+    ]
+}
