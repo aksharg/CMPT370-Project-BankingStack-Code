@@ -59,6 +59,9 @@ class plaidHTTPServer(BaseHTTPRequestHandler):
         else:
             self.send404Error()
 
+    def log_message(self, format, *args):
+        pass
+
 def openWebpage(url):
     webbrowser.open(url)
 
@@ -102,6 +105,7 @@ def startServer(env: str, client_name: str, token: str, page_title: str, account
             print('Keyboard interrupt, exiting Server.')
             sys.exit(0)
 
+    
     return params.plaid_response
 
 if __name__ == '__main__':
