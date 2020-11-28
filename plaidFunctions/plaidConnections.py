@@ -7,6 +7,8 @@ import plaidFunctions
 import plaidWebServer
 
 
+# * DONE
+# ! NOT TESTED
 def getUserFiles(user_id):
     with open(r'plaidFunctions\users.json','r') as user_file:
         users = json.load(user_file)
@@ -16,12 +18,17 @@ def getUserFiles(user_id):
                 return i['credentials_file'],i['accounts_file']
         return None,None
 
+def getUserAccData():
+    pass
 
+def getUserCredsData():
+    pass
+
+# ^ INCOMPLETE
+# ! NOT TESTED
 def linkAccount(api_credentials, plaid, user_id, bank_name):
-    # Get user Data. If user data is none then user doesnt exist
-    # get user accounts. If an account exists with that name return a message.
     user_creds_file, user_acc_file = getUserFiles(user_id)
-    account_name = "aa"
+
     if user_creds_file == None:
         print("User Doesn't exist")
         print("Re-run with a different name")
@@ -35,38 +42,36 @@ def linkAccount(api_credentials, plaid, user_id, bank_name):
         accounts_file = open(user_acc_file,"r")
         accounts = json.load(accounts_file)
         accounts_file.close()
-        # for acc in accounts['accounts']:
-        #     if acc['bank_name'] == bank_name:
-        #         print("You have already established a connection with this Banks.\n"+
-        #         "Please select a new Bank or choose a command which allows you to access this bank account.")
-        #         return False
-        
-        # account doesnt exist.
+
+        if len(accounts['accounts']) != 0:
+            for acc in accounts['accounts']:
+                if acc['bank_name'] == bank_name:
+                    print("You have already established a connection with this Bank.\n"+
+                    "Please select a new Bank or choose a command which allows you to access this bank account.")
+                    return False
+
         link_token = plaid.getLinkToken()
+
+        print("Please follow the instructions outlined on the newly opened Webpage to connect your bank account.")
 
         # Start webserver
         plaid_response = plaidWebServer.startServer(
             env = api_credentials['environment'],
             client_name = user_creds['name'],
             token = link_token,
-            page_title = "Link New Account",
-            account_name = "link",
+            page_title = "Link New Account for client "+user_creds['name'],
+            account_name = bank_name+" Bank Account",
             type = "Link")
 
         # print(plaid_response)
         if 'public_token' not in plaid_response:
             print("*** ATTENTION ***")
             print("An error occured in the Plaid API connection. No public_token was returned")
-            print("Try again with command:")
-            print("--link-account '%s' % account_name")
+            print("Try again with command: link_account")
             sys.exit(1)
 
         public_token = plaid_response['public_token']
-        print("")
-        print(f"Plaid public_token: {public_token}."
-            "Exchanging for access token.")
-    
-        # Obtain access_token
+
         try:
             exchange_response = plaid.exchangePublicToken(public_token)
         except PlaidError as excptn:
@@ -75,49 +80,69 @@ def linkAccount(api_credentials, plaid, user_id, bank_name):
             print("Error:\n")
             print(excptn)
             print("--------------------------------------------------------------------")
-            print("Try again with command:")
-            print("--link-account '%s' % account_name")
+            print("Try again with command: link_account")
             sys.exit(1)
         
-        # Get Access_token
         access_token = exchange_response['access_token']
         print("Access token received: %s" % access_token)
-        print("")
+        print("\nThis token will be used by all functions that talk with Plaid.")
 
-        # access_token = "access-development-9a0187e5-d5f1-43a3-88b3-09d14f4858ad"
-        balance_json = getBalance(plaid,access_token)
+        '''
+        access_token1 = access-development-9a0187e5-d5f1-43a3-88b3-09d14f4858ad
+        access_token2 = access-development-892c3ac3-5b73-4839-91a4-d36604d829bf
+        access_token3 = access-development-9615bef6-c9be-4589-b888-dcd2ec13b25b
+        '''
 
-        # print(balj)
-        # Store the access_token
-        accounts_file = open(user_acc_file,"r")
-        accounts = json.load(accounts_file)
+        with open(user_acc_file) as accounts_file:
+            accounts = json.load(accounts_file)
+            acc_modifier = accounts["accounts"]
 
+            for account in plaid_response["accounts"]:
+                new_account = {
+                    'bank_name' : plaid_response["institution"]["name"],
+                    'access_token' : access_token,
+                    'account_id': account["id"],
+                    'account_name': account["name"],
+                    'account_owner': user_creds['name'],
+                    'account_type': account["type"]
+                }
+                acc_modifier.append(new_account)
 
+                with open(user_acc_file,"w") as f: 
+                    json.dump(accounts, f, indent=4)
+                    f.close()
 
-        for account in balance_json:
-            new_account = {
-                'account_id': account.account_id,
-                'account_name': account.account_name,
-                'account_owner': user_creds['name'],
-                'account_type': account.account_type,
-                'balances': {'balance_current':account.balance_current,'balance_available':account.balance_available,'balance_limit':account.balance_limit}
-            }
-            print(new_account)
+            accounts_file.close()
 
-        # print(accounts)
-    return 'yes'
+    return True
 
-
+# ^ INCOMPLETE
+# ! NOT TESTED
 def updateAccount(api_credentials, plaid, account_name):
     pass
 
+# ^ INCOMPLETE
+# ! NOT TESTED
 def getTransactions(access_token):
     pass
 
-def getBalance(plaid,access_token):
+
+
+
+# * DONE
+# ! NOT TESTED
+def getBalance(plaid):
+    user_creds_file, user_acc_file = getUserFiles(user_id)
+
+    with open(user_acc_file,"r") as acc_file:
+        list_of_accounts = json.load(accounts_file)
+        acc_file.close()
+
     balance = plaid.getAccountBalance(access_token)
     return balance
 
+# * DONE
+# ! NOT TESTED
 def getInstitutions(plaid, supported_institutions):
     healthy_status = []
 
@@ -130,19 +155,52 @@ def getInstitutions(plaid, supported_institutions):
 
     return all(x == healthy_status[0] for x in healthy_status)
 
+# * DONE
+# * TESTED
+def encryptData(data, key):
+    cipher_suite = Fernet(key)
+    cipher_text = cipher_suite.encrypt(data.encode())
+    return cipher_text
+
+# * DONE
+# * TESTED
+def decryptData(encrypted_data,key):
+    cipher_suite = Fernet(key)
+    data = cipher_suite.decrypt(encrypted_data)
+    return data
+
+# * DONE
+# ! NOT TESTED
 def apiCredentials():
+    '''
+    Steps to decrypt api credentials
+    1. Obtain key from systemKey.key. Encode it to conver it to bytes
+    2. Open apiCredentials.json file which contains encrypted data and read it.
+    3. encode the encrypted data obtained from apiCredentials.json
+    4. use json.loads to convert string to dict object so you can use it as a json.
+    '''
+    with open("plaidFunctions/systemKey.key", "r") as key_file:
+        key = key_file.read().encode()
+        key_file.close()
+
     with open("plaidFunctions/apiCredentials.json") as json_file:
         json_api_credentials = json_file.read()
         json_file.close()
-    
-    print(json_api_credentials)
 
-    # if json_api_credentials['environment'] == "sandbox":
-    #     plaid = plaidFunctions.plaidAPI(json_api_credentials['client_id'],json_api_credentials['sandbox_secret'],json_api_credentials['environment'])
-    # else:
-    #     plaid = plaidFunctions.plaidAPI(json_api_credentials['client_id'],json_api_credentials['secret'],json_api_credentials['environment'])
-    # return json_api_credentials,plaid
+    decrypted_credentials = decryptData(json_api_credentials.encode(),key)
+    api_credentials = json.loads(decrypted_credentials)
 
+    api_credentials['environment'] = "sandbox"
+
+    if api_credentials['environment'] == "sandbox":
+        plaid = plaidFunctions.plaidAPI(api_credentials['client_id'],api_credentials['sandbox_secret'],api_credentials['environment'])
+    else:
+        plaid = plaidFunctions.plaidAPI(api_credentials['client_id'],api_credentials['secret'],api_credentials['environment'])
+
+    return api_credentials,plaid
+
+# * DONE
+# ! NOT TESTED
 def checkInstitutions():
     institutions_result = getInstitutions(plaid, supported_institutions)
 
@@ -151,52 +209,54 @@ def checkInstitutions():
     else:
         print("Some of the bank features might be unavailable at this moment")
 
-def help():
-    print("Supported Commands:")
-    print("- help: Prints a list of all possible commands and thier respective use cases")
-    print("- link_account: Will prompt the user to enter what they would like to name the account.")
-    print("                If that account name is already in use the user will be requested to try again")
-    print("- check_balance: Will prompt user to select an account for which they wish to view the balance.")
-    print("- view transactions: Will prompt the user to select an account and enter a time range for which they wish to view transactions")
+# * DONE
+def helpPrints():
+    print("-------------------------------------------------------------------------------------------------------------------------------|")
+    print("===============================================================================================================================|")
+    print("Supported Commands:                                                                                                            |")
+    print("<help>: Prints a list of all possible commands and thier respective use cases                                                  |")
+    print("<link_account>: Will prompt the user to enter what they would like to name the account.                                        |")
+    print("                If that account name is already in use the user will be requested to try again                                 |")
+    print("                                                                                                                               |")
+    print("<update_account>: If account credentials have expired, use this command to update the credentials                              |")
+    print("<check_balance>: Will prompt user to select an account for which they wish to view the balance.                                |")
+    print("<view_transactions>: Will prompt the user to select an account and enter a time range for which they wish to view transactions |")
 
+def linkAccountPrints(api_credentials,plaid,user_id):
+    user_bank = input("Supported Banks: ['RBC Royal Bank', 'CIBC', 'BMO Bank of Montreal', 'TD Canada Trust']\nPlease select a bank: ")
+    linkAccount(api_credentials,plaid,user_id,user_bank)
 
+def successfullLinkPrint():
+    print("Bank account successfully Linked!")
+
+# ^ INCOMPLETE
+# ! NOT TESTED
 def main(user_id):
-    print("Banking Stack Command Line Interface For Plaid Connection")
-    print("-----------------------------------------------------------------------")
-    help()
+    print("===============================================================================================================================|")
+    print("-------------------------------------------------------------------------------------------------------------------------------|")
+    print("Banking Stack Command Line Interface For Plaid Connection                                                                      |")
+    helpPrints()
 
-    supported_institutions = ["RBC", "CIBC", "BMO", "TD Canada"]
-    json_api_credentials = apiCredentials()
+    supported_institutions = ["RBC Royal Bank", "CIBC", "BMO Bank of Montreal", "TD Canada Trust"]
+    api_credentials,plaid = apiCredentials()
 
-    # print("\n")
+    while True:
+        user_input = input("\nPlease enter a command: ")
 
+        if user_input == "help":
+            helpPrints()
+            continue
 
-    # while True:
-    #     user_input = input("\nPlease enter a command: ")
-
-    #     if user_input == "help":
-    #         help()
-    #         continue
-    #     elif user_input == "link_account":
-    #         user_bank = input("Supported Banks: ['RBC', 'CIBC', 'BMO', 'TD Canada']\nPlease select a bank: ")
-    #         linkAccount(json_api_credentials, plaid, user_id, user_bank)
-    #     elif user_input == "exit":
-    #         sys.exit(0)
-
-    # user_choice = input("Please en")
-
-    # plaid = apiCredentials()
-    # checkInstitutions()
-    
-
-    # account_name = "RBC_checking"
-
-
-    # linkAccount(json_api_credentials, plaid, user_id, account_name)
-    
+        elif user_input == "link_account":
+            status = linkAccountPrints(api_credentials,plaid,user_id)
+            if status:
+                successfullLinkPrint()
         
+        elif user_input == "check_balance":
+            pass
 
-    # getBalance(plaid,'access-development-9a0187e5-d5f1-43a3-88b3-09d14f4858ad')
+        elif user_input == "exit":
+            sys.exit(0)
 
 
 main("1")
