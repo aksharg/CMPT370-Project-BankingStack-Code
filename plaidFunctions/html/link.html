@@ -1,7 +1,7 @@
 <html>
 
 <head>
-  <title class="macros">plaid-sync: {{title}}</title>
+  <title class="macros">BankingStack - Plaid Link</title>
   <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css">
   <script>
     var config = {{SERVER_PARAMS}};
@@ -11,6 +11,24 @@
       max-height: 20em;
       overflow: scroll;
     }
+    button {
+      width: 100%;
+      height: 50px;
+      background-color: black;
+      color: aliceblue;
+    }
+    body {
+      background-color: 143066;
+    }
+    h1 {
+      color: aliceblue;
+    }
+    h2 {
+      color: aliceblue;
+    }
+    p {
+      color: aliceblue;
+    }
   </style>
 </head>
 
@@ -18,60 +36,15 @@
   <div id="link_result" style="display:none">
     <h1>Plaid Link Complete</h1>
     <p class="macros">
-      <!-- The link process for <em>{{account_name}}</em> has completed with the following response: -->
-    </p>
-    <pre id="link_result_json"></pre>
-
-    <p class="plaid_update">
-      <!-- There is no need to do anything more, and you can safely close this window.
-      If the above was successful, this account should now sync properly again. -->
-    </p>
-
-    <p class="plaid_link">
-      <!-- Make sure you save the above response until you have ensured the plaid-sync
-      program has fully processed the new account and saved the credentials. The
-      above credentials cannot be retrieved again, if not exchanged/saved. -->
-    </p>
-
-    <p>
-      <!-- <em>Need to retry the process?</em> Save the above output, restart the plaid-sync project, then reload the page. -->
+      The link process for your <em>{{account_name}}</em> has been completed. Please return to BankingStack.
     </p>
   </div>
 
   <div id="instructions">
-    <h1 class="macros">BankingStack - Plaid Link: {{title}}</h1>
-
-    <div class="macros plaid_update">
-      <p>
-        <!-- Click the button below to initiate the Plaid update account process.
-        This will prompt you for the updated credentials for your account.       -->
-      </p>
-      <p>
-        <!-- This process updates the existing account integration and does not return
-        a new token. You can safely close this window regardless of how the process
-        completes. -->
-      </p>
-    </div>
-
-    <div class="macros plaid_link">
-      <p>
-        <!-- Click the button below to initiate the Plaid Link process. This will
-        open up an authentication flow through Plaid for your account <em>{{account_name}}</em>. -->
-      </p>
-      <p>
-        <!-- Follow the steps to enter your credentials and any two-factor/verification codes.
-        Once you've fully authenticated the account through Plaid, the public token will
-        be sent to the plaid-sync program and you should see confirmation in the console
-        where you ran the program.     -->
-      </p>
-      <p>
-        <!-- <em>Make sure you save the public token returned until the account is fully linked.</em>
-        The token cannot be recovered if lost, and will count against any limits your account
-        may have.   -->
-      </p>
-    </div>
-
-    <button id='linkButton'>Open Link - Institution Select</button>
+    <h1 class="macros">BankingStack - Plaid Link</h1>
+    <h2 class="macros">{{title}}</h2>
+    <p class="macros">Please click the button below to begin the linking process.</p>
+    <button id='linkButton'>Begin</button>
   </div>
 
   <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
@@ -96,13 +69,7 @@
           },
           body: JSON.stringify(metadata)
         });
-        // console.log('public_token: ' + public_token + ', metadata: ' + JSON.stringify(metadata));
       },
-      onExit: function (err, metadata) {
-        if (err != null) {
-          // The user encountered a Plaid API error prior to exiting.
-        }
-      }
     });
 
     document.getElementById('linkButton').onclick = function () {
