@@ -25,16 +25,6 @@ class tokenAccountInfo:
 		self.consent_expiration_time = data['item']['consent_expiration_time']
 		self.last_failed_update = data['status']['transactions']['last_failed_update']
 		self.last_successful_update = data['status']['transactions']['last_successful_update']
-	
-
-
-class accountOwnerIdentity:
-	def __init__(self,data):
-		self.raw_data = data
-		self.owner_names = data['names']
-		self.owner_emails = data['email']
-	
-
 
 class accountTransactions:
 	def __init__(self,data):
@@ -48,7 +38,6 @@ class accountTransactions:
 		self.amount = data['amount']
 		self.currency_code = data['iso_currency_code']
 
-
 class institutionsStatus:
 	def __init__(self,ins_id_search_data):
 		self.raw_data = ins_id_search_data
@@ -61,7 +50,6 @@ class institutionsStatus:
 		else:
 			self.transactions_status = None
 	
-
 def raise_plaid(ex: plaid.errors.ItemError):
     if ex.code == 'NO_ACCOUNTS':
         raise PlaidNoApplicableAccounts(ex)
@@ -87,7 +75,6 @@ class PlaidError(Exception):
     def __str__(self):
         return "%s: %s" % (self.plaid_error.code, self.message)
 
-
 class plaidAPI():
 	def __init__(self, client_id:str, secret:str, environment:str, supress_warnings=True):
 		self.client = plaid.Client(client_id, secret, environment, supress_warnings)
@@ -96,7 +83,7 @@ class plaidAPI():
 	def getLinkToken(self):
 		return self.client.post('/link/token/create', {'user': {'client_user_id': 'BS1'},
 		'client_name': 'BankingStack',
-		'country_codes': ['CA','US'],
+		'country_codes': ['CA'],
 		'language': 'en',
 		'products': ['transactions']})['link_token']
 	
