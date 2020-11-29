@@ -38,6 +38,8 @@
     <p class="macros">
       The link process for your <em>{{account_name}}</em> has been completed. Please return to BankingStack.
     </p>
+    <pre id="link_result_json" hidden></pre>
+
   </div>
 
   <div id="instructions">
@@ -70,6 +72,11 @@
           body: JSON.stringify(metadata)
         });
       },
+      onExit: function (err, metadata) {
+        if (err != null) {
+
+        }
+      }
     });
 
     document.getElementById('linkButton').onclick = function () {

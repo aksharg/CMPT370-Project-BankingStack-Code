@@ -1,6 +1,7 @@
 import re
 import datetime
 import plaid
+import json
 
 class accountBalance:
 	def __init__(self,data):
@@ -26,7 +27,10 @@ class tokenAccountInfo:
 		self.last_failed_update = data['status']['transactions']['last_failed_update']
 		self.last_successful_update = data['status']['transactions']['last_successful_update']
 
-class accountTransactions:
+	def __str__(self):
+		return str(self.__class__)+": "+str(self.__dict__)		
+
+class accountTransaction:
 	def __init__(self,data):
 		self.raw_data = data
 		self.date = data['date']
@@ -34,9 +38,16 @@ class accountTransactions:
 		self.transaction_id = data['transaction_id']
 		self.status_pending = data['pending']
 		self.merchant_name = data['merchant_name']
+		self.description = data['name']
 		self.category = data['category']
 		self.amount = data['amount']
 		self.currency_code = data['iso_currency_code']
+	
+	def to_json(self):
+		return json.dumps(self, default=lambda o: o.__dict__, indent=4)
+	
+	def __str__(self):
+		return str(self.__class__)+": "+str(self.__dict__)
 
 class institutionsStatus:
 	def __init__(self,ins_id_search_data):
@@ -122,7 +133,7 @@ class plaidAPI():
 			total_transactions = response['total_transactions']
 
 			ret += [
-				Transaction(t)
+				accountTransaction(t)
 				for t in response['transactions']
 			]
 
