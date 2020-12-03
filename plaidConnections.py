@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from cryptography.fernet import Fernet, InvalidToken
+# from cryptography.fernet import Fernet, InvalidToken
 import datetime
 from dateutil.relativedelta import relativedelta
 import plaidFunctions
