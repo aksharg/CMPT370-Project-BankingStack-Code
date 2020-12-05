@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import datetime
 from person import generateUserId, generateUserDir
 from fileCreation import fileCreation, updateFile
 import encryption
@@ -58,7 +59,8 @@ def register(username, password, email):
         user_dir = result[1]
         initialize_users = {"users":[
                 {"username": username,
-                "path": user_dir}]}
+                "path": user_dir,
+                "user_id":str(user_ID)}]}
         json_string = json.dumps(initialize_users)
         encrypted_data = encryption.encryptData(json_string, key)
         users_file = fileCreation("users.json", encrypted_data, True)
@@ -85,7 +87,9 @@ def register(username, password, email):
 
     data_user_credentials = {"username": username,
                             "password": password,
-                            "email": email} #TODO: "creation_date" "validation": True     "secretKey":
+                            "email": email,
+                            "creation_date": str(datetime.datetime.now()),
+                            "secret_key": str(encryption.generateKey().decode())}
     data_user_credentials_json_string = json.dumps(data_user_credentials)
     encrypted_data = encryption.encryptData(data_user_credentials_json_string, key)
     user_credential_path = user_dir + "\\userCredentials.json"
