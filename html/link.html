@@ -1,0 +1,99 @@
+<html>
+
+<head>
+  <title class="macros">BankingStack - Plaid Link</title>
+  <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css">
+  <script>
+    var config = {{SERVER_PARAMS}};
+  </script>
+  <style type="text/css">
+    pre {
+      max-height: 20em;
+      overflow: scroll;
+    }
+    button {
+      width: 100%;
+      height: 50px;
+      background-color: black;
+      color: aliceblue;
+    }
+    body {
+      background-color: 143066;
+    }
+    h1 {
+      color: aliceblue;
+    }
+    h2 {
+      color: aliceblue;
+    }
+    p {
+      color: aliceblue;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="link_result" style="display:none">
+    <h1>Plaid Link Complete</h1>
+    <p class="macros">
+      The link process for your <em>{{account_name}}</em> has been completed. Please return to BankingStack.
+    </p>
+    <pre id="link_result_json" hidden></pre>
+
+  </div>
+
+  <div id="instructions">
+    <h1 class="macros">BankingStack - Plaid Link</h1>
+    <h2 class="macros">{{title}}</h2>
+    <p class="macros">Please click the button below to begin the linking process.</p>
+    <button id='linkButton'>Begin</button>
+  </div>
+
+  <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+  <script>
+    var linkHandler = Plaid.create({
+      env: config.env,
+      clientName: config.clientName,
+      token: config.token,
+      apiVersion: 'v2',
+      product: ['auth', 'transactions'],
+      onLoad: function () {
+      },
+      onSuccess: function (public_token, metadata) {
+        document.querySelector("#instructions").style.display = "none"
+        document.querySelector("#link_result").style.display  = "block"
+        document.querySelector('#link_result_json').textContent = JSON.stringify(metadata, null, 4)
+
+        fetch("/api/success", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(metadata)
+        });
+      },
+      onExit: function (err, metadata) {
+        if (err != null) {
+
+        }
+      }
+    });
+
+    document.getElementById('linkButton').onclick = function () {
+      linkHandler.open();
+    };
+
+    window.addEventListener('DOMContentLoaded', (event) => {
+      document.querySelectorAll(".macros").forEach(el => {
+        el.innerHTML = el.innerHTML.replace("{{title}}",        config.pageTitle  )
+        el.innerHTML = el.innerHTML.replace("{{account_name}}", config.accountName)
+      });
+
+      var link = config.type == "link"
+      document.querySelectorAll(".plaid_link"  ).forEach(el => el.style.display = link ? "block" : "none"  )
+      document.querySelectorAll(".plaid_update").forEach(el => el.style.display = link ? "none"  : "block" )
+    });
+  </script>
+</body>
+
+</html>
