@@ -7,6 +7,8 @@ from fileCreation import fileCreation, updateFile
 import encryption
 from getEncryptedData import getEncryptedData
 
+
+
 def register(username, password, email):
     """Register the user
 
@@ -86,6 +88,7 @@ def register(username, password, email):
             updateFile("users.json", encrypted_data, True)
 
     data_user_credentials = {"username": username,
+                            "user_id": user_ID,
                             "password": password,
                             "email": email,
                             "creation_date": str(datetime.datetime.now()),

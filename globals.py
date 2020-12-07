@@ -1,0 +1,2 @@
+global credentialPath
+global loggedIn

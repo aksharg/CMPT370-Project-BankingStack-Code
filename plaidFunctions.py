@@ -86,6 +86,15 @@ class PlaidError(Exception):
     def __str__(self):
         return "%s: %s" % (self.plaid_error.code, self.message)
 
+class PlaidUnknownError(PlaidError):
+    pass
+
+class PlaidNoApplicableAccounts(PlaidError):
+    pass
+
+class PlaidAccountUpdateNeeded(PlaidError):
+    pass
+
 class plaidAPI():
 	def __init__(self, client_id:str, secret:str, environment:str, supress_warnings=True):
 		self.client = plaid.Client(client_id, secret, environment, supress_warnings)
@@ -108,7 +117,7 @@ class plaidAPI():
 	
 	@wrap_plaid_error
 	def getTokenAccountInfo(self, access_token):
-		response = self.client.Item.get(access_token)
+		resp = self.client.Item.get(access_token)
 		return tokenAccountInfo(resp)
 
 	@wrap_plaid_error
@@ -147,6 +156,11 @@ class plaidAPI():
 		institution_id = query_response['institutions'][0]['institution_id']
 		id_search_response = self.client.Institutions.get_by_id(institution_id,country_codes=["CA","US"],_options={'include_status':True})
 		institution_status = institutionsStatus(id_search_response)
-		
 		return institution_status
 	
+	@wrap_plaid_error
+	def removeAccount(self,access_token):
+		return self.client.Item.remove(access_token)
+
+	
+

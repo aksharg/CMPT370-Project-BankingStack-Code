@@ -53,7 +53,7 @@ class plaidHTTPServer(BaseHTTPRequestHandler):
         path = self.path.split('?')[0]
 
         if path == '/link.html':
-            self.fileServe('plaidFunctions\html\link.html')
+            self.fileServe('html\\link.html')
             return
 
         else:

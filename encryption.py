@@ -1,5 +1,6 @@
 from cryptography.fernet import Fernet, InvalidToken
 
+
 def generateKey():
     return Fernet.generate_key()
 
