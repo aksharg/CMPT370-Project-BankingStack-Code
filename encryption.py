@@ -3,12 +3,6 @@ from cryptography.fernet import Fernet, InvalidToken
 def generateKey():
     return Fernet.generate_key()
 
-def generateSystemKey():
-    key = generateKey()
-    key_file = open('systemKey.key','wb')
-    key_file.write(key)
-    key_file.close()
-
 def encryptData(data, key):
     """Encrypts the passed in data with the given key
 

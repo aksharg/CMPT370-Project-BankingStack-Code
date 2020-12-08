@@ -1,5 +1,6 @@
 import json
 import os
+import globals
 from getEncryptedData import getEncryptedData
 
 def login(username, password):
@@ -26,9 +27,7 @@ def login(username, password):
         exit_tuple = (False, "No users are currently registered.  Please register first")
         return exit_tuple
 
-    file = open("systemKey.key", "rb")
-    key = file.read()
-    file.close()
+    key = globals.general_key
 
     data = getEncryptedData("users.json", key)
     for users in data["users"]:
