@@ -10,20 +10,15 @@ import plaidWebServer
 import encryption
 import getEncryptedData
 import register
+import globals
 
-
-# ^ Need Testing
 def getSystemKey():
-    with open("systemKey.key","rb") as key_file:
-        key = key_file.read()
-        key_file.close()
-    return key
+    return globals.general_key
 
 def getUserId(user_dir_path,key):
     creds_data = getEncryptedData.getEncryptedData(user_dir_path,key)
     return str(creds_data["user_id"])
 
-# ^ Need Testing
 def createAccountsFile(user_dir_path,user_creds_path):
     key = getSystemKey()
     user_creds_data = getEncryptedData.getEncryptedData(user_creds_path,key)
@@ -38,7 +33,6 @@ def createAccountsFile(user_dir_path,user_creds_path):
     else:
         return str(user_dir_path+"\\userAccounts.json")
 
-# ^ Need Testing
 def getUserFiles(user_id):
     key = getSystemKey()
     users = getEncryptedData.getEncryptedData("users.json",key)
@@ -52,7 +46,6 @@ def getUserFiles(user_id):
 
     return None, None, "User Files Not Found"
 
-# ^ Need Testing
 def linkAccount(api_credentials, plaid, user_id, bank_name):
     user_creds_data, user_acc_file, message = getUserFiles(user_id)
     user_key = user_creds_data['secret_key'].encode()
@@ -113,7 +106,6 @@ def linkAccount(api_credentials, plaid, user_id, bank_name):
 
                 return (True, str(plaid_response["institution"]["name"])+" account has successfully been linked!")
 
-# ^ Need Testing
 def deleteAccount(api_credentials, plaid, user_id, bank_name,env):
     
     user_creds_data, user_acc_file, message = getUserFiles(user_id)
@@ -172,7 +164,6 @@ def deleteAccount(api_credentials, plaid, user_id, bank_name,env):
                 else:
                     return (False, "You have no connection with this Institution")
 
-# ^ NEED Testing
 def getUserAccData(plaid,user_id,bank_name):
     user_creds_data, user_acc_file, message = getUserFiles(user_id)
     user_key = user_creds_data['secret_key'].encode()
@@ -195,8 +186,6 @@ def getUserAccData(plaid,user_id,bank_name):
     else:
         return (True, resp)
 
-
-# ^ NEED Testing
 def getBalance(user_id,plaid,bank_name):
     user_creds_data, user_acc_file, message = getUserFiles(user_id)
     user_key = user_creds_data['secret_key'].encode()
@@ -239,7 +228,6 @@ def getBalance(user_id,plaid,bank_name):
 
             return (True, "Success")
 
-
 def getTransactions(user_id, plaid, start_date, end_date, account_name):
     user_creds_data, user_acc_file, message = getUserFiles(user_id)
     user_key = user_creds_data['secret_key'].encode()
@@ -280,7 +268,6 @@ def getTransactions(user_id, plaid, start_date, end_date, account_name):
         print(accounts_two["accounts"][acc_idx]["transactions"])
         return accounts_two["accounts"][acc_idx]["transactions"]
 
-
 def getInstitutions(plaid, supported_institutions):
     healthy_status = []
     item_login = False
@@ -304,12 +291,8 @@ def getInstitutions(plaid, supported_institutions):
 
     return healthy_status
 
-
-# ^ NEED Testing
 def apiCredentials(env):
-    with open("systemKey.key", "r") as key_file:
-        key = key_file.read().encode()
-        key_file.close()
+    key =getSystemKey()
 
     decrypted_credentials = getEncryptedData.getEncryptedData("apiCredentials.json",key)
     api_credentials = json.loads(decrypted_credentials)

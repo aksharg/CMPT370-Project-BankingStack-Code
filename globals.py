@@ -13,7 +13,9 @@ global tableCibc
 global tableRbc
 global tableBmo
 global tableTd
+global general_key
 
+general_key = b'LN5jWCQp-v6rPuy-tGzFE7xV1KzV4vcW9bEgJtlcrJs='
 
 transactionsSWCibc = False
 transactionsSWBmo = False

@@ -2,6 +2,7 @@ import json
 import os
 import re
 import datetime
+import globals
 from person import generateUserId, generateUserDir
 from fileCreation import fileCreation, updateFile
 import encryption
@@ -45,11 +46,13 @@ def register(username, password, email):
 
     exists = False
 
-    if not os.path.exists("systemKey.key"):
-        encryption.generateSystemKey()
-    file = open("systemKey.key", "rb")
-    key = file.read()
-    file.close()
+    # if not os.path.exists("systemKey.key"):
+    #     encryption.generateSystemKey()
+    # file = open("systemKey.key", "rb")
+    # key = file.read()
+    # file.close()
+
+    key=globals.general_key
 
     if not os.path.exists("users.json"):
         # Have to verify that generateUserID is not the same as a previous
@@ -97,7 +100,7 @@ def register(username, password, email):
     encrypted_data = encryption.encryptData(data_user_credentials_json_string, key)
     user_credential_path = user_dir + "\\userCredentials.json"
     fileCreation(user_credential_path, encrypted_data, True)
-
+    fileCreation(user_dir +"\\userSubscriptions.json","[]",False)
 
     # data = getEncryptedData("users.json", key)
     # json_string = json.dumps(data)

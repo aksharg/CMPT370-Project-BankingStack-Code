@@ -2,12 +2,21 @@ from appJar import gui
 from register import register
 from login import login
 import datetime
-
+from subscriptions import addSubscription
+from subscriptions import editSubscription
+from subscriptions import deleteSubscription
+from subscriptions import sendSubData
 import globals
 import plaidConnections
 import getEncryptedData
+import note
+import os
+import json
+import newsFilter
 
 app = gui("Banking Stack","350x300")
+
+
 
 def loginPress():
     app.setTransparency(0)
@@ -22,7 +31,6 @@ def loginPress():
     app.addButtons(["Submit","Cancel"], loginButton,colspan=2)
     app.stopSubWindow()
     app.showSubWindow("Login")
-    print("login pressed")
   
 def registerPress():
     app.setTransparency(0)
@@ -42,7 +50,6 @@ def registerPress():
     app.addButtons(["Submit","Cancel"], registerButton,colspan=2)
     app.stopSubWindow()
     app.showSubWindow("Register")
-    print("register pressed")
   
 def loginButton(btn):
     if btn == "Submit":
@@ -58,10 +65,8 @@ def loginButton(btn):
             app.raiseFrame("WELCOME")
             app.showToolbar()
             app.setTransparency(100)
-        print("login submit pressed")
 
     if btn == "Cancel":
-        print("login cancel pressed")
         app.destroyAllSubWindows()
         app.setTransparency(100)
 
@@ -73,10 +78,8 @@ def registerButton(btn):
         else:
             app.destroySubWindow("Register")
             app.setTransparency(100)
-        print("register submit pressed")
 
     if btn == "Cancel":
-        print("register cancel pressed")
         app.destroySubWindow("Register")
         app.setTransparency(100)
 
@@ -93,7 +96,6 @@ def exitPress():
 def welcome():
     app.removeFrame("WELCOME")
     app.startFrame("WELCOME",row=0,column=0,rowspan=7,colspan=7)
-    app.setSticky("")
 
     sys_key = plaidConnections.getSystemKey()
     user_id = plaidConnections.getUserId(globals.credentialPath,sys_key)
@@ -101,6 +103,7 @@ def welcome():
     
     app.addImage("bank2","bankingstack.gif")
 
+    app.setSticky("new")
     app.addLabel("user_info","Username: "+str(user_creds_data['username'])+" | "+
                 "Account ID: "+str(user_creds_data['user_id'])+" | "+
                 "Account Created: "+str(user_creds_data['creation_date'])[0:10])
@@ -115,11 +118,9 @@ def welcome():
     app.stopFrame()
     app.raiseFrame("WELCOME")
 
+# Bank Accounts Functions
 def closeAccountSubWindow(btn):
-    # print(btn)
     if btn == "Back":
-        print("Going back to main accounts page")
-        print(globals.balanceBtn)
         app.destroySubWindow(str(globals.balanceBtn[5:9])+"Account Balance")
         app.setTransparency(100)
 
@@ -588,24 +589,542 @@ def banking():
     app.stopFrame()
     app.raiseFrame("BANKING")
 
-def notesAndNews():
-    i=1
-    print("CHECK NEWS")
-    app.removeFrame("test2")
-    app.startFrame("test2",row=0,column=0,rowspan=50,colspan=7)
-    app.setSticky("")
+# Subscription functions
+def addSubPress():
+    app.setTransparency(0)
+    app.startSubWindow("Add Subscription",modal=True)
+    app.setLocation("CENTER")
+    app.hideTitleBar()
+    app.addLabel("nameLab", "Company Name:", 1, 0)
+    app.addEntry("nameEnt", 1, 1)
+    app.addLabel("amountLab", "Amount:", 2, 0)
+    app.addEntry("amountEnt", 2, 1)
+    app.addLabel("payLab","Payment Frequency", 3, 0)
+    app.addEntry("payEnt", 3, 1)
+    app.addLabel("periodLab","Subscription Period", 4, 0)
+    app.addEntry("periodEnt", 4, 1)
+    app.addLabel("startLab","Start Date", 5, 0)
+    app.addEntry("startEnt", 5, 1)
+    app.addButtons(["Submit","Cancel"], addSubButton,colspan=2)
+    app.stopSubWindow()
+    app.showSubWindow("Add Subscription")
     
-    for i in range(50):
-        app.addButton("Note: "+str(i),exit,row=i+1,column=7)
-    for i in range(50):
-        app.addButton("Note2: "+str(i),exit,row=i+1,column=1)
+def editSubPress():
+    app.setTransparency(0)
+    app.startSubWindow("Edit Subscription",modal=True)
+    app.setLocation("CENTER")
+    app.hideTitleBar()
+    app.addLabel("idLab", "Enter Subscription ID", 0, 0)
+    app.addEntry("idEnt", 0, 1)
+    app.addLabel("nameLab", "Company Name:", 1, 0)
+    app.addEntry("nameEnt", 1, 1)
+    app.addLabel("amountLab", "Amount:", 2, 0)
+    app.addEntry("amountEnt", 2, 1)
+    app.addLabel("payLab","Payment Frequency", 3, 0)
+    app.addEntry("payEnt", 3, 1)
+    app.addLabel("periodLab","Subscription Period", 4, 0)
+    app.addEntry("periodEnt", 4, 1)
+    app.addLabel("startLab","Start Date", 5, 0)
+    app.addEntry("startEnt", 5, 1)
+    app.addButtons(["Submit","Cancel"], editSubButton,colspan=2)
+    app.stopSubWindow()
+    app.showSubWindow("Edit Subscription")
+    
+def delSubPress():
+    app.setTransparency(0)
+    app.startSubWindow("Delete Subscription",modal=True)
+    app.setLocation("CENTER")
+    app.hideTitleBar()
+    app.addLabel("idLab", "Enter Subscription ID", 0, 0)
+    app.addEntry("idEnt", 0, 1)
+    app.addButtons(["Submit","Cancel"], deleteSubButton,colspan=2)
+    app.stopSubWindow()
+    app.showSubWindow("Delete Subscription")
 
-    app.stopFrame()
-    print("CHECK FOR EXISTING NOTES")
-    app.raiseFrame("test2")
+def listSubPress():
+    app.setTransparency(0)
+    app.startSubWindow("All Subscriptions")
+    
+    app.setSize("1000x700")
+    app.setLocation(500,200)
+    app.hideTitleBar()
+    data=sendSubData()
+
+    app.setSticky("new")
+    app.addTable("subs",[["Company","Amount","Payment Frequecy","Period","Start Date","ID"]])
+    for x in data:
+        app.addTableRow("subs",[x['company'],x['amount'],x['paymentFrequency'],x['subPeriod'],x['startDate'],x['subId']])
+
+    app.addButton("Back to Subscription Options",listSubButton)
+    
+    app.stopSubWindow()
+    app.showSubWindow("All Subscriptions")
+    
+def addSubButton(btn):
+    if btn == "Submit":
+
+        addSubscription(app.getEntry("nameEnt"),app.getEntry("amountEnt"),app.getEntry("payEnt"),app.getEntry("periodEnt"),app.getEntry("startEnt"))
+        app.destroySubWindow("Add Subscription")
+        app.setTransparency(100)
+
+        
+    
+    if btn == "Cancel":
+        app.destroySubWindow("Add Subscription")
+        app.setTransparency(100)
+
+def editSubButton(btn):
+    if btn == "Submit":
+
+        editSubscription(int(app.getEntry("idEnt")),app.getEntry("nameEnt"),app.getEntry("amountEnt"),app.getEntry("payEnt"),app.getEntry("periodEnt"),app.getEntry("startEnt"))
+        app.destroySubWindow("Edit Subscription")
+        app.setTransparency(100)
+
+        
+    
+    if btn == "Cancel":
+        app.destroySubWindow("Edit Subscription")
+        app.setTransparency(100)
+
+def deleteSubButton(btn):
+    if btn == "Submit":
+
+        deleteSubscription(int(app.getEntry("idEnt")))
+        app.destroySubWindow("Delete Subscription")
+        app.setTransparency(100)
+        
+    
+    if btn == "Cancel":
+        app.destroySubWindow("Delete Subscription")
+        app.setTransparency(100)
+
+def listSubButton(btn):
+    app.destroySubWindow("All Subscriptions")
+    app.setTransparency(100)
 
 def subscriptions():
-    app.raiseFrame("test3")
+    app.raiseFrame("SUBSCRIPTION")
+
+# News Functions
+def editNews():
+    """
+    This function will show a sub window that let the user to enter
+    the specific key of the news filter that wish to edit.
+
+    return:
+        :return: None
+    """
+    #app.destroySubWindow("Financial Plan")
+    app.setTransparency(0)
+    app.startSubWindow("edit news")
+    app.hideTitleBar()
+    app.addLabel("pkey", "Please enter the key for your news", 2, 0)
+    app.addEntry("ikey", 3, 0)
+    # app.addLabel("ptitle", "Please enter the key words or title:", 4, 0)
+    # app.addEntry("ititle", 5, 0)
+    app.addButtons(["Submit", "Cancel"], enterTitileButton, 10, 10, 10, 10)
+    app.stopSubWindow()
+    app.showSubWindow("edit news")
+
+def enterTitileButton(btn):
+    """
+    This function will grab the key for the specific news filter they wish
+    to edit from the user, if the user pressed the submit button just now.
+    Else, the all the sub window will be terminated.
+
+    arg:
+        :param btn: the result of the submit or cancel button.
+
+    return:
+        :return: None
+    """
+    global keys
+    if btn == "Submit":
+        if type(int(app.getEntry("ikey"))) is int:
+            keys = int(app.getEntry("ikey"))
+            app.destroySubWindow("edit news")
+            app.startSubWindow("add news title")
+            app.hideTitleBar()
+            app.addLabel("ptitle", "Please enter the key words or title:", 2, 0)
+            app.addEntry("ititle", 3, 0)
+            # app.addLabel("pindex", "Please enter the number:", 4, 0)
+            # app.addEntry("index", 5, 0)
+            app.addButtons(["Submit", "Cancel"], searchEditNewsButton, 10, 10, 10, 10)
+            app.stopSubWindow()
+            app.showSubWindow("add news title")
+            app.setTransparency(100)
+    if btn == "Cancel":
+        app.destroySubWindow("edit news")
+        app.setTransparency(100)
+
+def searchEditNewsButton(btn):
+    """
+    This function will grab the key words or the title of the news
+    and then run the displayNewsFilter function and list out 20 news
+    title in the new sub window, if the user pressed the submit button.
+    Else, the all the sub window will be terminated.
+
+    arg:
+        :param btn: the result of the submit or cancel button.
+
+    return:
+        :return: None
+    """
+    newlist = []
+    global title2
+    # global key
+
+    if btn == "Submit":
+        if len(app.getEntry("ititle")) < 1:
+            app.errorBox("Error", "Invalid Input!")
+            app.destroySubWindow("add news title")
+        else:
+            data = newsFilter.displayNewsFilter(app.getEntry("ititle"))
+            title2 = app.getEntry("ititle")
+            # key = app.getEntry("ikey")
+            app.destroySubWindow("add news title")
+            app.startSubWindow("display news")
+            app.hideTitleBar()
+            app.addMessage("list")
+            for item in data:
+                
+                newlist.append(item)
+                newlist.append('\n')
+            app.getAllScales()
+            app.addLabel("list",newlist)
+            app.getAllScales()
+            app.addLabel("pnum", "Please enter the key words or title:", 2, 0)
+            app.addEntry("inum", 3, 0)
+            app.addButtons(["Submit", "Cancel"], editNewsFilterButton, 4, 0, 0, 4)
+            # app.destroySubWindow("add news")
+            app.stopSubWindow()
+            app.showSubWindow("display news")
+        app.setTransparency(100)
+            
+
+    if btn == "Cancel":
+        app.destroySubWindow("add news title")
+        app.setTransparency(100)
+
+def editNewsFilterButton(btn):
+    """
+    This function will grab the specific key for the news filter,
+    the key words or the title of the news and the index number
+    of the listed news they wish to save in the .json file,
+    and then run the editNewsFilter function editing the specific
+    news filter in the .json file, if the user pressed the submit
+    button. Else, the all the sub window will be terminated.
+
+    arg:
+        :param btn: the result of the submit or cancel button.
+
+    return:
+        :return: None
+    """
+    if btn == "Submit":
+        if type(int(app.getEntry("inum"))) is not int:
+            app.errorBox("Error", "Invalid Input!")
+            app.destroySubWindow("display news")
+        else:
+            int(keys)
+            newsFilter.editNewsFilter(keys,title2,int(app.getEntry("inum")))
+            app.destroySubWindow("display news")
+        app.setTransparency(100)
+
+    if btn == "Cancel":
+        app.destroySubWindow("display news")
+        app.setTransparency(100)
+
+def addNews():
+    """
+    This function will grab the key words or the title of the news
+    and then run the displayNewsFilter function and list out 20 news
+    title in the new sub window.
+
+    return:
+        :return: None
+    """
+    #app.destroySubWindow("Financial Plan")
+    app.setTransparency(0)
+    app.startSubWindow("add news")
+    app.hideTitleBar()
+    app.addLabel("ptitle", "Please enter the key words or title:", 2, 0)
+    app.addEntry("ititle", 3, 0)
+    # app.addLabel("pindex", "Please enter the number:", 4, 0)
+    # app.addEntry("index", 5, 0)
+    app.addButtons(["Submit", "Cancel"], searchNewsButton, 10, 10, 10, 10)
+    app.stopSubWindow()
+    app.showSubWindow("add news")
+
+def searchNewsButton(btn):
+    """
+    This function will grab the index number of the specific news that
+    the user wish to save into the .json file from the user, if the user
+    pressed the submit button. Else, the all the sub window will be
+    terminated.
+
+    arg:
+        :param btn: the result of the submit or cancel button.
+
+    return:
+        :return: None
+    """
+    newlist = []
+    global title
+
+    if btn == "Submit":
+        if len(app.getEntry("ititle")) < 1:
+            app.errorBox("Error", "Invalid Input!")
+            app.destroySubWindow("add news")
+        else:
+            data = newsFilter.displayNewsFilter(app.getEntry("ititle"))
+            title = app.getEntry("ititle")
+            app.destroySubWindow("add news")
+            app.startSubWindow("display news")
+            app.hideTitleBar()
+            app.addMessage("list")
+            for item in data:
+                
+                newlist.append(item)
+                newlist.append('\n')
+            app.getAllScales()
+            app.addLabel("list",newlist)
+            app.getAllScales()
+            app.addLabel("pnum", "Please enter the key words or title:", 2, 0)
+            app.addEntry("inum", 3, 0)
+            app.addButtons(["Submit", "Cancel"], addNewsFilterButton, 4, 0, 0, 4)
+            # app.destroySubWindow("add news")
+            app.stopSubWindow()
+            app.showSubWindow("display news")
+        app.setTransparency(100)
+
+    if btn == "Cancel":
+        app.destroySubWindow("add news")
+        app.setTransparency(100)
+
+def addNewsFilterButton(btn):
+    """
+    This function will grab the specific key for the news filter,
+    the key words or the title of the news and the index number
+    of the listed news they wish to save in the .json file,
+    and then run the createNewsFilter function saving a new
+    news filter in the .json file, if the user pressed the submit
+    button. Else, the all the sub window will be terminated.
+
+    arg:
+        :param btn: the result of the submit or cancel button.
+
+    return:
+        :return: None
+    """
+    if btn == "Submit":
+        if type(int(app.getEntry("inum"))) is not int:
+            app.errorBox("Error", "Invalid Input!")
+            app.destroySubWindow("display news")
+        else:
+            newsFilter.addNewsFilter(title,int(app.getEntry("inum")))
+            app.destroySubWindow("display news")
+        app.setTransparency(100)
+
+    if btn == "Cancel":
+        app.destroySubWindow("display news")
+        app.setTransparency(100)
+
+def deleteNote():
+    """
+    This function will grab the specific key of the note that the user
+    wish to remove and then remove it from the note.json file.
+
+    return:
+        :return: None
+    """
+    #app.destroySubWindow("Financial Plan")
+    app.setTransparency(0)
+    app.startSubWindow("delete note")
+    app.hideTitleBar()
+    app.addLabel("pdkey", "note key:", 2, 0)
+    app.addEntry("idkey", 3, 0)
+    app.addButtons(["Submit", "Cancel"], deleteNoteButton, 10, 10, 10, 10)
+    app.stopSubWindow()
+    app.showSubWindow("delete note")
+
+def deleteNoteButton(btn):
+    """
+    This function will search for the specific note that the user wish
+    to remove with the key that just been inputted, and the run the
+    deleteNote function and removing it from the note.json file.
+
+    arg:
+        :param btn: the result of the submit or cancel button.
+
+    return:
+        :return: None
+    """
+    if btn == "Submit":
+        
+        if type(int(app.getEntry("idkey"))) is not int:
+            app.errorBox("Error","Invalid Input!")
+            app.destroySubWindow("delete note")
+        else:
+            note.deleteNote(int(app.getEntry("idkey")))
+            app.destroySubWindow("delete note")
+        app.setTransparency(100)
+
+    if btn == "Cancel":
+        app.destroySubWindow("delete note")
+        app.setTransparency(100)
+
+def editNote():
+    """
+    This function will grab the specific key of the note that the user
+    wish to edit, the new title and the new content from the user.
+
+    return:
+        :return: None
+    """
+    #app.destroySubWindow("Financial Plan")
+    app.setTransparency(0)
+    app.startSubWindow("edit note")
+    app.hideTitleBar()
+    app.addLabel("pkey", "note key:", 2, 0)
+    app.addEntry("ikey", 3, 0)
+    app.addLabel("ptitle", "Note title:", 4, 0)
+    app.addEntry("ititle", 5, 0)
+    app.addLabel("pcontent", "Note content:", 6, 0)
+    app.addEntry("icontent", 7, 0, 0, 7)
+    app.addButtons(["Submit", "Cancel"], editNoteButton, 10, 10, 10, 10)
+    app.stopSubWindow()
+    app.showSubWindow("edit note")
+
+def editNoteButton(btn):
+    """
+    This function will search for the specific note that the user wish
+    to edit with the key that just been inputted, and the run the
+    editNote function and replace it from the latest title and content.
+
+    arg:
+        :param btn: the result of the submit or cancel button.
+
+    return:
+        :return: None
+    """
+    if btn == "Submit":
+        if type(int(app.getEntry('ikey'))) is not int:
+            if len(app.getEntry("ititle")) < 1 or len(app.getEntry("icontent")) < 1:
+                app.errorBox("Error","Invalid Input!")
+                app.destroySubWindow("edit note")
+        else:
+            dict = {'title':app.getEntry("ititle"),'content':app.getEntry("icontent")}
+            note.editNote(int(app.getEntry('ikey')),dict)
+            app.destroySubWindow("edit note")
+        app.setTransparency(100)
+
+    if btn == "Cancel":
+        app.destroySubWindow("edit note")
+        app.setTransparency(100)
+
+def addNote():
+    """
+    This function will grab the title and the content of the note
+    they wish to create.
+
+    return:
+        :return: None
+    """
+    #app.destroySubWindow("Financial Plan")
+    app.setTransparency(0)
+    app.startSubWindow("add note")
+    app.hideTitleBar()
+    app.setSize(450,550)
+    app.setLocation(400,100)
+    app.addLabel("ptitle", "Note title:", 2, 0)
+    app.addEntry("ititle", 3, 0)
+    app.addLabel("pcontent", "Note content:", 4, 0)
+    app.addEntry("icontent", 6, 0, 0, 3)
+    app.addButtons(["Submit", "Cancel"], addNoteButton, 10, 10, 10, 10)
+    app.stopSubWindow()
+    app.showSubWindow("add note")
+
+def addNoteButton(btn):
+    """
+    This function will create a new note with the title and the content
+    that been inputted by the user. Then run the createNote function
+    and create a note.json file and storing every note data in it.
+
+    arg:
+        :param btn: the result of the submit or cancel button.
+
+    return:
+        :return: None
+    """
+    if btn == "Submit":
+        if len(app.getEntry("ititle")) < 1 or len(app.getEntry("icontent")) < 1:
+            app.errorBox("Error","Invalid Input!")
+            app.destroySubWindow("add note")
+            app.setTransparency(100)
+
+        else:
+            note.createNote(app.getEntry("ititle"), app.getEntry("icontent"))
+            app.destroySubWindow("add note")
+            app.setTransparency(100)
+
+
+    if btn == "Cancel":
+        app.destroySubWindow("add note")
+        app.setTransparency(100)
+
+def notesAndNews():
+    i=1
+    
+    app.removeFrame("Financial Plan")
+    app.startFrame("Financial Plan",row=0,column=0,rowspan=50,colspan=7)
+    news_strings = ""
+    note_strings = "notes \n"
+    user_dir = globals.credentialPath
+    user_dir = user_dir[:-20]
+    app.setSticky("ew")
+    app.startScrollPane("test",disabled="horizontal")
+    if os.path.exists(user_dir+"news.json"):
+        with open(user_dir+'news.json') as f:
+            data = json.load(f)
+            list = data['data']
+            for item in list:
+                news_strings += str(item['key'])
+                news_strings += '\n'
+                # for i in list:
+                news_strings += item['news']['title']
+                news_strings += '\n'
+                news_strings += item['news']['url']
+                news_strings += '\n\n'
+
+    if os.path.exists(user_dir+"note.json"):
+        with open(user_dir+"note.json") as f:
+            data = json.load(f)
+            list = data['notes']
+            for item in list:
+                note_strings += "key : " + str(item['key'])
+                note_strings += '\n'
+
+                note_strings += "title : "+item['note']['title']
+                note_strings += '\n'
+                note_strings += "content : "+item['note']['content']
+                note_strings += '\n\n'
+
+
+    app.addLabel("title","news \n")
+    app.addLabel("news",news_strings)
+    app.addLabel("notes",note_strings)
+    app.stopScrollPane()
+
+    app.setSticky("")
+    app.addButtons(["add note","edit note","delete note","add news filter","edit news filter"], [addNote,editNote,deleteNote,addNews,editNews])
+
+    
+
+
+    app.stopFrame()
+    
+    app.raiseFrame("Financial Plan")
 
 def refresh():
     banking()
@@ -613,7 +1132,7 @@ def refresh():
 def progGUI():
 
     # Login/Register Frame
-    app.startFrame("test1",row=0,column=0,rowspan=7,colspan=7)
+    app.startFrame("LOGIN PAGE",row=0,column=0,rowspan=7,colspan=7)
     app.setPadding([10,0])
     app.addImage("bank","bankingstack.gif")
     app.addButton("Login",loginPress,row=1,column=0)
@@ -641,19 +1160,22 @@ def progGUI():
     app.stopFrame()
 
     # Notes Frame
-    app.startFrame("test2",row=0,column=0,rowspan=7,colspan=7)
+    app.startFrame("Financial Plan",row=0,column=0,rowspan=7,colspan=7)
     app.setSticky("ne")
     app.addLabel("notes_temp",".")
     app.stopFrame()
 
     # Subscriptions Frame
-    app.startFrame("test3",row=0,column=0,rowspan=7,colspan=7)
+    app.startFrame("SUBSCRIPTION",row=0,column=0,rowspan=7,colspan=7)
     app.setSticky("")
-    app.addLabel("subscriptions_temp",".")
+    app.addButton("Add Subscription",addSubPress)
+    app.addButton("Edit Subscription",editSubPress)
+    app.addButton("Delete Subscription",delSubPress)
+    app.addButton("List Subscriptions",listSubPress)
     app.stopFrame()
 
     # Toolbar
-    app.raiseFrame("test1")
+    app.raiseFrame("LOGIN PAGE")
     app.addToolbarButton("Home",welcome,findIcon=True)
     app.addToolbar(["Accounts"],banking,findIcon=True)
     app.addToolbarButton("Financial Plan",notesAndNews,findIcon=True)
