@@ -1,0 +1,19 @@
+$ pytest -v
+===================================================================================================== test session starts ======================================================================================================
+platform win32 -- Python 3.8.5, pytest-6.1.2, py-1.9.0, pluggy-0.13.1 -- c:\users\devin\appdata\local\programs\python\python38\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Devin\Documents\test_folder
+collected 10 items                                                                                                                                                                                                              
+
+test_decryption.py::test_stringDecryption PASSED                                                                                                                                                                          [ 10%]
+test_decryption.py::test_invalidFernetKeyDecryption PASSED                                                                                                                                                                [ 20%]
+test_decryption.py::test_stringValidity PASSED                                                                                                                                                                            [ 30%]
+test_encryption.py::test_stringEncryption PASSED                                                                                                                                                                          [ 40%]
+test_encryption.py::test_invalidFernetKeyEncryption PASSED                                                                                                                                                                [ 50%]
+test_encryption.py::test_stringValidity PASSED                                                                                                                                                                            [ 60%]
+test_register.py::test_registerString PASSED                                                                                                                                                                              [ 70%]
+test_register.py::test_registerInt PASSED                                                                                                                                                                                 [ 80%]
+test_register.py::test_registerStringAndInt PASSED                                                                                                                                                                        [ 90%]
+test_register.py::test_registerFalseString PASSED                                                                                                                                                                         [100%]
+
+====================================================================================================== 10 passed in 0.16s ======================================================================================================

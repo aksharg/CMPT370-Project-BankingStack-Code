@@ -1,0 +1,10 @@
+(base) C:\Users\Kennet Shin\Desktop\group9\noteAndNewsFilterDev>pytest noteNewsTest.py
+================================================================================== test session starts ===================================================================================
+platform win32 -- Python 3.7.6, pytest-5.3.5, py-1.8.1, pluggy-0.13.1
+rootdir: C:\Users\Kennet Shin\Desktop\group9\noteAndNewsFilterDev
+plugins: hypothesis-5.5.4, arraydiff-0.3, astropy-header-0.1.2, doctestplus-0.5.0, openfiles-0.4.0, remotedata-0.3.2
+collected 5 items                                                                                                                                                                         
+
+noteNewsTest.py .....                                                                                                                                                               [100%]
+
+=================================================================================== 5 passed in 2.12s ====================================================================================
