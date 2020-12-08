@@ -86,7 +86,7 @@ def registerButton(btn):
 def exitApplication():
     app.hideToolbar()
     app.setSize("350x300")
-    app.raiseFrame("test1")
+    app.raiseFrame("LOGIN PAGE")
     globals.credentialPath = ""
     globals.loggedIn = False
 
