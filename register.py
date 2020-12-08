@@ -98,6 +98,7 @@ def register(username, password, email):
     user_credential_path = user_dir + "\\userCredentials.json"
     fileCreation(user_credential_path, encrypted_data, True)
 
+
     # data = getEncryptedData("users.json", key)
     # json_string = json.dumps(data)
     # fileCreation("temp_testing.json", json_string)

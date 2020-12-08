@@ -72,7 +72,6 @@ def linkAccount(api_credentials, plaid, user_id, bank_name):
                     
         print("Webpage Initiated!")
 
-        # Start webserver
         plaid_response = plaidWebServer.startServer(
             env = api_credentials['environment'],
             client_name = user_creds_data['username'],
@@ -240,8 +239,8 @@ def getBalance(user_id,plaid,bank_name):
 
             return (True, "Success")
 
-def getTransactions(user_id, plaid, start_date, end_date, account_name):
 
+def getTransactions(user_id, plaid, start_date, end_date, account_name):
     user_creds_data, user_acc_file, message = getUserFiles(user_id)
     user_key = user_creds_data['secret_key'].encode()
     
@@ -250,56 +249,37 @@ def getTransactions(user_id, plaid, start_date, end_date, account_name):
     
     elif message == "Success":
         accounts = getEncryptedData.getEncryptedData(user_acc_file,user_key)
-
         for acc in accounts["accounts"]:
             if acc["account_name"] == account_name:
+                print('ysdsd')
                 access_token = acc["access_token"]
                 account_id = acc["account_id"]
+                acc["transactions"] = []
                 break
 
-        # print(accounts)
-        print(plaid.getAccountTransactions(access_token,start_date,end_date,[account_id],status_callback=None))
+        encrypted_acc = encryption.encryptData(json.dumps(accounts),user_key)
+        register.updateFile(user_acc_file,encrypted_acc, True)
 
-        # for acc in accounts["accounts"]:
-        #     print(acc)
-        #     if acc["account_name"] == account_name:
-        #         access_token = acc["access_token"]
-        #         account_id = acc["account_id"]
-        #         break
+        transaction_objects = plaid.getAccountTransactions(access_token,start_date,end_date,[account_id],status_callback=None)
+        acc_idx = 0
+        accounts_two = getEncryptedData.getEncryptedData(user_acc_file,user_key)
+        for acc in accounts_two["accounts"]:
+                for trans in transaction_objects:
+                    if acc["account_id"] == trans.account_id:
+                        acc_idx = accounts_two["accounts"].index(acc)
+                        trans_dict = {"transaction_date":trans.date,
+                                        "transaction_id":trans.transaction_id,
+                                        "merchant_name": trans.merchant_name,
+                                        "amount": trans.amount,
+                                        "category": trans.category,
+                                        "description": trans.description}
+                        acc["transactions"].append(trans_dict)
+            
+        encrypted_acc_two = encryption.encryptData(json.dumps(accounts_two),user_key)
+        register.updateFile(user_acc_file,encrypted_acc_two, True)
+        print(accounts_two["accounts"][acc_idx]["transactions"])
+        return accounts_two["accounts"][acc_idx]["transactions"]
 
-        
-
-
-        # with open(user_acc_file) as acc_file:
-        #     acc_data = json.load(acc_file)
-
-        # acc_data["accounts"][user_choice-1]["Transactions"] = transactions_list_jsonified
-
-        # with open(user_acc_file, "w") as acc_file:
-        #     json.dump(acc_data,acc_file)
-        #     acc_file.close()
-        
-        # with open(user_acc_file) as acc_file:
-        #     acc_data = json.load(acc_file)
-        
-        # print("===============================================================================================================================|")
-        # print("Account: "+account_name)
-        # print("Date/Time:",datetime.datetime.now().strftime("%d/%m/%Y - %H:%M:%S"))
-        # print("Total Transactions:",len(acc_data["accounts"][user_choice-1]["Transactions"]),"from",start_date.strftime("%d/%m/%Y"),"to",end_date.strftime("%d/%m/%Y"))
-        # print("-------------------------------------------------------------------------------------------------------------------------------|")
-        # for transaction in acc_data["accounts"][user_choice-1]["Transactions"]:
-        #     print("Transaction Date:",transaction['date'])
-        #     print("Merchant Name:",transaction['merchant_name'])
-        #     print("Description:",transaction['description'])
-        #     if transaction["status_pending"] == False:
-        #         print("Transaction Status:","Processed Successfully")
-        #     elif transaction["status_pending"] == True:
-        #         print("Transaction Status:","Processing Pending")
-        #     print("Transaction Categories: ",transaction['category'])
-        #     print("Transaction Amount: $"+str(transaction["amount"]))
-        #     print("-------------------------------------------------------------------------------------------------------------------------------|")
-        # print("===============================================================================================================================|")
-        # return True
 
 def getInstitutions(plaid, supported_institutions):
     healthy_status = []
@@ -322,142 +302,8 @@ def getInstitutions(plaid, supported_institutions):
                 transactions_status = False
         healthy_status.append([institution,item_login,transactions_status])
 
-    # print(healthy_status)
     return healthy_status
 
-
-'''
-    sdfsdf
-    dsfsdf
-    def balanceTransactionsPrintHandler(user_acc_file,request_source):
-        count = 1
-        with open(user_acc_file,"r") as acc_file:
-            list_of_accounts = json.load(acc_file)
-            acc_file.close()
-        print("===============================================================================================================================|")
-
-        if (len(list_of_accounts['accounts']) == 0) and (request_source == "getBalance"):
-            print("There are no linked accounts. Please use <link_account> to link a bank account")
-            return 0,0,0
-        elif (len(list_of_accounts['accounts']) == 0) and (request_source == "getTransactions"):
-            return 0,0,0,0,0,0
-        else:
-            print("Accounts List:")
-            for acc in list_of_accounts['accounts']:
-                print(str(count)+". "+acc['account_name'])
-                count+=1
-            print("===============================================================================================================================|")
-
-            if request_source == "getBalance":
-                print("-------------------------------------------------------------------------------------------------------------------------------|")
-                print("Please input the number corresponding to the account for which you wish to view the balance.                                   |")
-                print("-------------------------------------------------------------------------------------------------------------------------------|")
-
-                user_choice = input("Pick an Account: ")
-
-                account_name = list_of_accounts['accounts'][int(user_choice)-1]['account_name']
-                access_token = list_of_accounts['accounts'][int(user_choice)-1]['access_token']
-
-                return int(user_choice),account_name, access_token
-
-            if request_source == "getTransactions":
-                user_choice = input("Pick an Account: ")
-                print("\n")
-                print("===============================================================================================================================|")
-                print("Time Range Presets: You can choose one of the following time range presets to view transactions.                               |")
-                print("1. One Week                                                                                                                    |")
-                print("2. One Month                                                                                                                   |")
-                print("3. Three Months                                                                                                                |")
-                print("4. Six Months                                                                                                                  |")
-                print("===============================================================================================================================|")
-                print("-------------------------------------------------------------------------------------------------------------------------------|")
-                print("Please input the number corresponding to the account for which you wish to view the transactions.                              |")
-                print("                                                                                                                               |")
-                print("Note: You can only view 24 months of transaction data. Additionally, a maximum of 500 transactions will be shown for any time  |")
-                print("      range you input. Ability to view more than 500 transactions at a time will be available soon! Ability to view custom     |")
-                print("      time ranges coming soon.                                                                                                 |")
-                print("-------------------------------------------------------------------------------------------------------------------------------|")
-
-                time_range = input("Pick a time range: ")
-
-                if time_range == "1":
-                    start_date = (datetime.datetime.now() - datetime.timedelta(days=7)).date()
-                    end_date = datetime.datetime.now().date()
-                elif time_range == "2":
-                    start_date = datetime.datetime.now().date() + relativedelta(months=-1)
-                    end_date = datetime.datetime.now().date()
-                elif time_range == "3":
-                    start_date = datetime.datetime.now().date() + relativedelta(months=-3)
-                    end_date = datetime.datetime.now().date()
-                elif time_range == "4":
-                    start_date = datetime.datetime.now().date() + relativedelta(months=-6)
-                    end_date = datetime.datetime.now().date()
-                else:
-                    print("default time range: 1 Day")
-                    start_date = (datetime.datetime.now() - datetime.timedelta(days=1)).date()
-                    end_date = datetime.datetime.now().date()
-
-                account_name = list_of_accounts['accounts'][int(user_choice)-1]['account_name']
-                access_token = list_of_accounts['accounts'][int(user_choice)-1]['access_token']
-                account_id   = list_of_accounts['accounts'][int(user_choice)-1]['account_id']
-
-                return int(user_choice), account_id, account_name, access_token, start_date, end_date
-'''
-'''
-
-
-    def getUserCredsData():
-        pass
-
-    
-
-    def updateAccount(api_credentials, plaid, account_name):
-        pass
-
-    
-
-    
-
-
-
-    # def encryptData(data, key):
-    #     cipher_suite = Fernet(key)
-    #     cipher_text = cipher_suite.encrypt(data.encode())
-    #     return cipher_text
-
-    # def decryptData(encrypted_data,key):
-    #     cipher_suite = Fernet(key)
-    #     data = cipher_suite.decrypt(encrypted_data)
-    #     return data
-
-    def checkInstitutions():
-        institutions_result = getInstitutions(plaid, supported_institutions)
-
-        if institutions_result == True:
-            print("All bank features are HEALTHY.")
-        else:
-            print("Some of the bank features might be unavailable at this moment")
-
-    def helpPrints():
-        print("-------------------------------------------------------------------------------------------------------------------------------|")
-        print("===============================================================================================================================|")
-        print("Supported Commands:                                                                                                            |")
-        print("<help>: Prints a list of all possible commands and thier respective use cases                                                  |")
-        print("<link_account>: Will prompt the user to enter what they would like to name the account.                                        |")
-        print("                If that account name is already in use the user will be requested to try again                                 |")
-        print("                                                                                                                               |")
-        print("<update_account>: If account credentials have expired, use this command to update the credentials                              |")
-        print("<check_balance>: Will prompt user to select an account for which they wish to view the balance.                                |")
-        print("<view_transactions>: Will prompt the user to select an account and enter a time range for which they wish to view transactions |")
-        print("<add_transaction_note>: Coming Soom!                                                                                           |")
-
-    def linkAccountPrints(api_credentials,plaid,user_id):
-        user_bank = input("Supported Banks: ['RBC Royal Bank', 'CIBC', 'BMO Bank of Montreal', 'TD Canada Trust']\nPlease select a bank: ")
-        linkAccount(api_credentials,plaid,user_id,user_bank)
-
-    def successfullLinkPrint():
-        print("Bank account successfully Linked!")
-'''
 
 # ^ NEED Testing
 def apiCredentials(env):
@@ -465,7 +311,6 @@ def apiCredentials(env):
         key = key_file.read().encode()
         key_file.close()
 
-    # decrypted_credentials = encryption.decryptData(,key)
     decrypted_credentials = getEncryptedData.getEncryptedData("apiCredentials.json",key)
     api_credentials = json.loads(decrypted_credentials)
 
@@ -477,66 +322,3 @@ def apiCredentials(env):
         plaid = plaidFunctions.plaidAPI(api_credentials['client_id'],api_credentials['secret'],api_credentials['environment'])
 
     return api_credentials,plaid
-
-# # ! NEED Work
-# def main(user_id, env):
-#     print("Banking Stack Command Line Interface For Plaid Connection")
-
-
-#     supported_institutions = ["RBC Royal Bank", "CIBC", "BMO Bank of Montreal", "TD Canada Trust"]
-#     api_credentials,plaid = apiCredentials(env)
-
-#     print(supported_institutions)
-#     bank_name = input("Choose Bank: ")
-
-
-#     start_date = (datetime.datetime.now() - datetime.timedelta(days=30)).date()
-#     end_date = datetime.datetime.now().date()
-
-#     print(getBalance(user_id,plaid,"CIBC"))
-#     getTransactions(
-#         user_id=user_id,
-#         plaid=plaid,
-#         start_date=start_date,
-#         end_date=end_date,
-        # account_name="Plaid Checking")
-
-
-
-'''
-    # while True:
-    #     user_input = input("\nPlease enter a command: ")
-
-    #     if user_input == "help":
-    #         helpPrints()
-    #         continue
-
-    #     elif user_input == "link_account":
-    #         status = linkAccountPrints(api_credentials,plaid,user_id)
-    #         if status:
-    #             successfullLinkPrint()
-        
-    #     elif user_input == "check_balance":
-    #         status = getBalance(user_id,plaid)
-    #         if not status:
-    #             print("Try Again")
-    #             print("\n")
-    #             helpPrints()
-
-    #     elif user_input == "view_transactions":
-    #         status = getTransactions(user_id,plaid)
-    #         if not status:
-    #             print("Try Again")
-    #             print("\n")
-    #             helpPrints()
-
-    #     elif user_input == "exit":
-    #         sys.exit(0)
-
-    #     else:
-    #         print("Try Again")
-    #         print("\n")
-    #         helpPrints()
-'''
-
-# main("13598905","sandbox")

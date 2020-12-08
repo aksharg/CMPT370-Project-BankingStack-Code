@@ -86,7 +86,7 @@ def exitApplication():
     app.raiseFrame("test1")
     globals.credentialPath = ""
     globals.loggedIn = False
- 
+
 def exitPress():
     app.stop()
 
@@ -116,9 +116,11 @@ def welcome():
     app.raiseFrame("WELCOME")
 
 def closeAccountSubWindow(btn):
-    if btn == "back":
+    # print(btn)
+    if btn == "Back":
         print("Going back to main accounts page")
-        app.destroyAllSubWindows()
+        print(globals.balanceBtn)
+        app.destroySubWindow(str(globals.balanceBtn[5:9])+"Account Balance")
         app.setTransparency(100)
 
 def unlinkAccount(api_credentials,plaid,user_id,bank_name):
@@ -129,6 +131,7 @@ def unlinkAccount(api_credentials,plaid,user_id,bank_name):
         app.infoBox("Unlink"+bank_name+" Account",message)
 
 def obtainBalance(btn,user_id,plaid,bank_name,user_accs_file,user_key):
+    globals.balanceBtn = btn
     status, message = plaidConnections.getBalance(user_id,plaid,bank_name)
     if status == False:
         app.errorBox(bank_name+" balance Error",message)
@@ -177,17 +180,196 @@ def obtainBalance(btn,user_id,plaid,bank_name,user_accs_file,user_key):
             second_count += 1
             app.stopLabelFrame()
 
-        app.addButtons(["back"], closeAccountSubWindow,column=2,rowspan=len(first_bank_accounts))
+        app.addButton("Back", closeAccountSubWindow,column=2,rowspan=len(first_bank_accounts))
         app.stopSubWindow()
         app.setTransparency(0)
         app.showSubWindow(str(btn[5:9])+"Account Balance")
 
+def obtainTransactions(start_date,end_date,account_name,bank_name):
+    if end_date == None or start_date == None:
+        app.errorBox("Transaction Date Error","Please select a date range to view transactions.")
+        app.hideSubWindow(bank_name+" Transaction Settings")
+        app.setTransparency(100)
+
+    elif end_date < start_date:
+        app.errorBox("Transaction Date Error","End date must not be a date occuring before start date.")
+        app.hideSubWindow(bank_name+" Transaction Settings")
+        app.setTransparency(100)
+
+    else:
+        transactions = plaidConnections.getTransactions(globals.user_id_global, globals.plaid_global, start_date, end_date, account_name)
+        app.hideSubWindow(bank_name+" Transaction Settings")
+        app.setTransparency(100)
+        return transactions
+        
+def listTransactionsButton(btn):
+    if btn == "Back to Accounts (RBC)":
+        app.destroySubWindow("RBC All Transactions")
+        globals.tableRbc = False
+        app.setTransparency(100)
+
+    if btn == "Back to Accounts (CIBC)":
+        app.destroySubWindow("CIBC All Transactions")
+        globals.tableCibc = False
+        app.setTransparency(100)
+
+    if btn == "Back to Accounts (TD)":
+        app.destroySubWindow("TD All Transactions")
+        globals.tableTd = False
+        app.setTransparency(100)
+
+    if btn == "Back to Accounts (BMO)":
+        app.destroySubWindow("BMO All Transactions")
+        globals.tableBmo = False
+        app.setTransparency(100)
+
+def createTransTable(bank_name,transactions_list):
+    app.startSubWindow(bank_name+" All Transactions")
+    app.setSize("1000x700")
+    app.hideTitleBar()
+
+    data=transactions_list
+    app.setSticky("new")
+    app.addTable(bank_name+" transactions_table",[["Date","Merchant Name","Amount($)","Category","Description"]],row=0,column=0,rowspan=5)
+    for trans in data:
+        app.addTableRow(bank_name+" transactions_table",[trans['transaction_date'],trans['merchant_name'],trans['amount'],trans['category'],trans['description']])
+    app.setSticky("sew")
+    app.addButton("Back to Accounts ("+bank_name+")",listTransactionsButton,row=4,column=0)
+    app.stopSubWindow()
+    app.showSubWindow(bank_name+" All Transactions")
+    globals.tableCibc = True
+
+def transactionOptions(btn):
+    print(btn)
+    if btn == "CIBC View Transactions":
+        start_date = app.getDatePicker("CIBC start_date_dp")
+        end_date = app.getDatePicker("CIBC end_date_dp")
+        account_name = app.getOptionBox("CIBC Account Options")
+        bank_name = "CIBC"
+        transactions_list = obtainTransactions(start_date,end_date,account_name,bank_name)
+
+    if btn == "BMO View Transactions":
+        start_date = app.getDatePicker("BMO start_date_dp")
+        end_date = app.getDatePicker("BMO end_date_dp")
+        account_name = app.getOptionBox("BMO Account Options")
+        bank_name = "BMO"
+        transactions_list = obtainTransactions(start_date,end_date,account_name,bank_name)
+
+    if btn == "TD View Transactions":
+        start_date = app.getDatePicker("TD start_date_dp")
+        end_date = app.getDatePicker("TD end_date_dp")
+        account_name = app.getOptionBox("TD Account Options")
+        bank_name = "TD"
+        transactions_list = obtainTransactions(start_date,end_date,account_name,bank_name)
+
+    if btn == "RBC View Transactions":
+        start_date = app.getDatePicker("RBC start_date_dp")
+        end_date = app.getDatePicker("RBC end_date_dp")
+        account_name = app.getOptionBox("RBC Account Options")
+        bank_name = "RBC"
+        transactions_list = obtainTransactions(start_date,end_date,account_name,bank_name)
+
+    app.setTransparency(0)
+
+    if bank_name == "CIBC":
+        if globals.tableCibc != True:
+            createTransTable(bank_name,transactions_list)
+        else:
+            app.showSubWindow(bank_name+" All Transactions")
+    if bank_name == "RBC":
+        if globals.tableRbc != True:
+            createTransTable(bank_name,transactions_list)
+        else:
+            app.showSubWindow(bank_name+" All Transactions")
+    if bank_name == "TD":
+        if globals.tableTd != True:
+            createTransTable(bank_name,transactions_list)
+        else:
+            app.showSubWindow(bank_name+" All Transactions")
+    if bank_name == "BMO":
+        if globals.tableBmo != True:
+            createTransTable(bank_name,transactions_list)
+        else:
+            app.showSubWindow(bank_name+" All Transactions")
+
+def hideTransactionsSubWindow(btn):
+    if btn == "CIBC back":
+        app.hideSubWindow("CIBC Transaction Settings")
+        app.setTransparency(100)
+    if btn == "RBC back":
+        app.hideSubWindow("RBC Transaction Settings")
+        app.setTransparency(100)
+    if btn == "TD back":
+        app.hideSubWindow("TD Transaction Settings")
+        app.setTransparency(100)
+    if btn == "BMO back":
+        app.hideSubWindow("BMO Transaction Settings")
+        app.setTransparency(100)
+
+def transactionsSubWindow(accounts,bank_name):
+
+    account_name_list = []
+
+    for acc in accounts:
+        account_name_list.append(acc["account_name"])
+
+    app.destroySubWindow(bank_name+" Transaction Settings")
+    app.startSubWindow(bank_name+" Transaction Settings")
+    app.setSize("1000x700")
+    app.setPadding([5,5])
+    app.hideTitleBar()
+    
+    app.startLabelFrame(bank_name+" Account Selection",row=0,column=0,colspan=2)
+    app.setPadding([10,5])
+    app.setSticky("ew")
+    app.addLabel(bank_name+" select_acc_trans", "Select Account: ",row=0,column=0)
+    app.addLabelOptionBox(bank_name+" Account Options", account_name_list, row=0, column=1)
+    app.stopLabelFrame()
+
+    year_max = int(str(datetime.datetime.now())[0:4])
+    year_min = int(str(datetime.datetime.now())[0:4])-1
+
+    app.startLabelFrame(bank_name+" Start Date Select",row=1,column=0,rowspan=2)
+    app.setPadding([10,5])
+    app.addDatePicker(bank_name+" start_date_dp",row=0,column=0)
+    app.setDatePickerRange(bank_name+" start_date_dp", year_min, year_max)
+    app.setDatePicker(bank_name+" start_date_dp")
+    app.stopLabelFrame()
+
+    app.startLabelFrame(bank_name+" End Date Select",row=1,column=1,rowspan=2)
+    app.setPadding([10,5])
+    app.addDatePicker(bank_name+" end_date_dp",row=0,column=1)
+    app.setDatePickerRange(bank_name+" end_date_dp", year_min, year_max)
+    app.setDatePicker(bank_name+" end_date_dp")
+    app.stopLabelFrame()
+
+    app.startLabelFrame(bank_name+" Options",row=2,column=0,colspan=2)
+    app.setPadding([10,5])
+    app.setSticky("ew")
+    app.addButtons([bank_name+" View Transactions"], transactionOptions,row=0,column=0)
+    app.addButtons([bank_name+" back"], hideTransactionsSubWindow,row=0,column=1)
+    app.stopLabelFrame()
+
+    app.stopSubWindow()
+    app.setTransparency(0)
+
+    app.showSubWindow(bank_name+" Transaction Settings")
+    app.setTransparency(0)
+
+    return True
+
 def accountsButtonLogic(btn):
+    globals.widgetCount = 0
     api_credentials,plaid = plaidConnections.apiCredentials("sandbox")
     sys_key = plaidConnections.getSystemKey()
     user_id = plaidConnections.getUserId(globals.credentialPath,sys_key)
     user_creds_data, user_accs_file, message = plaidConnections.getUserFiles(user_id)
     user_key = user_creds_data['secret_key'].encode()
+
+    globals.user_id_global = user_id
+    globals.plaid_global = plaid
+    
+    accounts = getEncryptedData.getEncryptedData(user_accs_file,user_key)["accounts"]
 
     if btn == "View CIBC Balance":
         print(btn)
@@ -211,20 +393,28 @@ def accountsButtonLogic(btn):
 
     elif btn == "View CIBC Transactions":
         print(btn)
+        app.setTransparency(0)
+        transactionsSubWindow(accounts,"CIBC")
+        app.destroySubWindow("CIBC All Transactions")
 
-        pass
     elif btn == "View BMO Transactions":
         print(btn)
+        app.setTransparency(0)
+        transactionsSubWindow(accounts,"BMO")
+        app.destroySubWindow("BMO All Transactions")
 
-        pass
+
     elif btn == "View RBC Transactions":
         print(btn)
+        app.setTransparency(0)
+        transactionsSubWindow(accounts,"RBC")
+        app.destroySubWindow("RBC All Transactions")
 
-        pass
     elif btn == "View TD Transactions":
         print(btn)
-
-        pass
+        app.setTransparency(0)
+        transactionsSubWindow(accounts,"TD")
+        app.destroySubWindow("TD All Transactions")
 
     elif btn == "Unlink CIBC":
         print(btn)
@@ -257,17 +447,17 @@ def accountsButtonLogic(btn):
             
             if status == False:
                 app.errorBox(str(bank_name)+" Link Error: ",message)
-            else:
-                app.startSubWindow(str(btn)+"Account Balance",modal=True)
-                app.setSize("1000x700")
-                app.setPadding([5,0])
-                app.hideTitleBar()
-                accounts = getEncryptedData.getEncryptedData(user_accs_file,user_key)
+            
+                # app.startSubWindow(str(btn)+"Account Balance",modal=True)
+                # app.setSize("1000x700")
+                # app.setPadding([5,0])
+                # app.hideTitleBar()
+                # accounts = getEncryptedData.getEncryptedData(user_accs_file,user_key)
 
-                app.addButtons(["back"], closeAccountSubWindow,colspan=2)
-                app.stopSubWindow()
-                app.showSubWindow(str(btn)+"Account Balance")
-        
+                # app.addButtons(["back"], closeAccountSubWindow,colspan=2)
+                # app.stopSubWindow()
+                # app.showSubWindow(str(btn)+"Account Balance")
+
 def banking():
     app.removeFrame("BANKING")
     app.startFrame("BANKING",row=0,column=0)
@@ -282,11 +472,30 @@ def banking():
     api_credentials,plaid = plaidConnections.apiCredentials("sandbox")
     sys_key = plaidConnections.getSystemKey()
     user_id = plaidConnections.getUserId(globals.credentialPath,sys_key)
+
+    print(user_id)
+
     user_creds_data, user_accs_file, message = plaidConnections.getUserFiles(user_id)
     user_key = user_creds_data['secret_key'].encode()
 
     accounts = getEncryptedData.getEncryptedData(user_accs_file, user_key)
     # print(accounts)
+    # print(connected_banks)
+    # if connected_banks:
+    #     print("YEYE")
+    #     if globals.transactionsSWCibc != True:
+            # globals.transactionsSWCibc = transactionsSubWindow(accounts["accounts"],"CIBC")
+    #         app.hideSubWindow("CIBC Transaction Settings")
+    #     if globals.transactionsSWBmo != True:
+    #         globals.transactionsSWBmo = transactionsSubWindow(accounts["accounts"],"BMO")
+    #         app.hideSubWindow("BMO Transaction Settings")
+    #     if globals.transactionsSWRbc != True:
+    #         globals.transactionsSWRbc = transactionsSubWindow(accounts["accounts"],"RBC")
+    #         app.hideSubWindow("RBC Transaction Settings")
+    #     if globals.transactionsSWTd != True:
+    #         globals.transactionsSWTd = transactionsSubWindow(accounts["accounts"],"TD")
+    #         app.hideSubWindow("TD Transaction Settings")
+    #     app.setTransparency(100)
 
     if len(accounts["accounts"]) != 0:
         for account in accounts["accounts"]:
