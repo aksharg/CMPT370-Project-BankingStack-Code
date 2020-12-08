@@ -314,7 +314,7 @@ def transactionsSubWindow(accounts,bank_name):
     for acc in accounts:
         account_name_list.append(acc["account_name"])
 
-    app.destroySubWindow(bank_name+" Transaction Settings")
+    # app.destroySubWindow(bank_name+" Transaction Settings")
     app.startSubWindow(bank_name+" Transaction Settings")
     app.setSize("1000x700")
     app.setPadding([5,5])
