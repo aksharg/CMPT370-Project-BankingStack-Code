@@ -30,4 +30,4 @@ Run Program:
 
 
 How do we run tests?
-At the moment none of our tests are runnable. This is because of the drastic changes we made to the code in order to implement a GUI. The main reason behind this error is the fact we didn’t update the tests as the code changed. In hindsight we should have written tests as we developed code instead of creating tests at an early stage. However, to show that the testing was working and the functions that were implemented prior to the GUI changes were successfully unit tested, we have included some test result log files showcasing successful testing.
+At the moment none of our tests are not runnable. This is because of the drastic changes we made to the code in order to implement a placeholder GUI. The main reason behind this error is the fact we didn’t update the tests as the code changed. In hindsight we should have written tests as we developed code instead of creating tests at an early stage. However, to show that the testing was working and the functions that were implemented prior to the GUI changes were successfully unit tested, we have included some test result log files showcasing successful testing.
